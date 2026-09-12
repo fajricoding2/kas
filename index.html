@@ -447,7 +447,7 @@
       renderBulanan(data);
       renderPengeluaran(data, currentFilter);
 
-      statusEl.textContent = 'Terakhir diperbarui: ' + new Date().toLocaleTimeString('id-ID');
+      statusEl.textContent = 'jam: ' + new Date().toLocaleTimeString('id-ID');
     } catch (err) {
       statusEl.textContent = 'Gagal memuat data: ' + err.message;
       console.error(err);
