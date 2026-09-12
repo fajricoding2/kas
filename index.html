@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Data Kas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+
+  /* ==== GANTI BAGIAN INI DENGAN GAMBAR BACKGROUND KAMU ==== */
+  body {
+    font-family: 'Poppins', Arial, sans-serif;
+    margin: 0;
+    padding: 24px;
+    min-height: 100vh;
+    color: #1f2233;
+    background-image:
+      linear-gradient(180deg, rgba(30,27,75,0.35), rgba(15,15,30,0.55)),
+      url("gambar.png");   /* <-- ganti "background.jpg" dengan nama file gambarmu, taruh di folder yang sama */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+  }
+  /* ========================================================= */
+
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  .page-header {
+    background: rgba(79, 70, 229, 0.55);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: #fff;
+    border-radius: 18px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    animation: fadeInDown 0.5s ease;
+  }
+  .page-header h1 {
+    margin: 0 0 6px 0;
+    font-size: 24px;
+    font-weight: 700;
+  }
+  .page-header p {
+    margin: 0;
+    font-size: 13px;
+    opacity: 0.9;
+  }
+  #status {
+    font-size: 12px;
+    opacity: 0.9;
+    margin-top: 10px;
+  }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .summary-card {
+    background: rgba(255,255,255,0.55);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 16px;
+    padding: 18px 20px;
+    box-shadow: 0 8px 24px rgba(31, 34, 51, 0.12);
+    border-left: 5px solid #4f46e5;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    animation: fadeInUp 0.5s ease;
+  }
+  .summary-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(31, 34, 51, 0.18);
+  }
+  .summary-card.green { border-left-color: #16a34a; }
+  .summary-card.red { border-left-color: #dc2626; }
+  .summary-card .label {
+    font-size: 12px;
+    color: #4b5563;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .summary-card .value {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1f2937;
+  }
+  .card {
+    background: rgba(255,255,255,0.45);
+    backdrop-filter: blur(18px) saturate(160%);
+    -webkit-backdrop-filter: blur(18px) saturate(160%);
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 18px;
+    padding: 22px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 10px 30px rgba(31, 34, 51, 0.15);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+    animation: fadeInUp 0.6s ease;
+  }
+  .card:hover {
+    box-shadow: 0 14px 36px rgba(31, 34, 51, 0.22);
+  }
+  .card h2 {
+    font-size: 16px;
+    margin: 0 0 16px 0;
+    color: #1f2937;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .card h2 .title-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card h2 .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #4f46e5;
+    display: inline-block;
+    box-shadow: 0 0 0 4px rgba(79,70,229,0.15);
+  }
+  .search-box {
+    padding: 7px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,0.1);
+    background: rgba(255,255,255,0.7);
+    font-family: inherit;
+    font-size: 12px;
+    outline: none;
+    min-width: 160px;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .search-box:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79,70,229,0.15);
+  }
+  .table-wrapper {
+    overflow-x: auto;
+    border-radius: 12px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 14px;
+    background: rgba(255,255,255,0.35);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  th, td {
+    padding: 11px 12px;
+    text-align: left;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+  }
+  th {
+    background: rgba(255,255,255,0.55);
+    color: #3f3f52;
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  tbody tr {
+    transition: background 0.15s ease, transform 0.15s ease;
+  }
+  tbody tr:hover {
+    background: rgba(79, 70, 229, 0.08);
+    transform: scale(1.005);
+  }
+  tr.total-row td {
+    font-weight: 700;
+    background: rgba(79, 70, 229, 0.12);
+    border-top: 2px solid rgba(79,70,229,0.25);
+  }
+  td.number, th.number {
+    text-align: right;
+  }
+  .empty-note {
+    font-size: 13px;
+    color: #55586b;
+    padding: 12px 0;
+  }
+
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-14px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="page-header">
+    <h1>💰 Data Kas</h1>
+    <p>Ringkasan uang bulanan dan pengeluaran</p>
+    <div id="status">Memuat data...</div>
+  </div>
+
+  <div class="summary-grid" id="summaryGrid"></div>
+
+  <div class="card">
+    <h2><span class="dot"></span> Uang Bulanan</h2>
+    <div class="table-wrapper" id="bulananTable"></div>
+  </div>
+
+  <div class="card">
+    <h2>
+      <span class="title-group"><span class="dot" style="background:#dc2626;"></span> Pengeluaran</span>
+      <input type="text" id="searchPengeluaran" class="search-box" placeholder="Cari keterangan...">
+    </h2>
+    <div class="table-wrapper" id="pengeluaranTable"></div>
+  </div>
+
+</div>
+
+<script>
+  // ==== KONFIGURASI ====
+  const NAMA_FILE_EXCEL = "kas.xlsx";
+  const INTERVAL_REFRESH_MS = 10000;
+
+  function formatRupiah(angka) {
+    if (angka === null || angka === undefined || angka === '') return '-';
+    const num = typeof angka === 'number' ? angka : parseFloat(angka);
+    if (isNaN(num)) return String(angka);
+    return 'Rp ' + num.toLocaleString('id-ID');
+  }
+
+  function findFirstNumberAfter(row, fromCol) {
+    for (let c = fromCol + 1; c < row.length; c++) {
+      const v = row[c];
+      if (v !== undefined && v !== '' && !isNaN(parseFloat(v))) {
+        return parseFloat(v);
+      }
+    }
+    return null;
+  }
+
+  function parseSheet(rows) {
+    const bulanan = { colBulan: -1, names: [], nameCols: [], monthlyRows: [], totalRow: null, totalMasuk: null, uangSaatIni: null };
+    const pengeluaran = { colNo: -1, colHarga: -1, colKet: -1, rows: [], totalRow: null };
+
+    // cari header tabel pengeluaran: baris yang punya "no", "harga", "keterangan"
+    for (let r = 0; r < rows.length; r++) {
+      const row = rows[r].map(c => String(c).trim().toLowerCase());
+      const idxNo = row.indexOf('no');
+      const idxHarga = row.indexOf('harga');
+      const idxKet = row.indexOf('keterangan');
+      if (idxNo > -1 && idxHarga > -1 && idxKet > -1) {
+        pengeluaran.colNo = idxNo;
+        pengeluaran.colHarga = idxHarga;
+        pengeluaran.colKet = idxKet;
+        pengeluaran.headerRow = r;
+        break;
+      }
+    }
+
+    if (pengeluaran.headerRow !== undefined) {
+      for (let r = pengeluaran.headerRow + 1; r < rows.length; r++) {
+        const row = rows[r] || [];
+        const noVal = row[pengeluaran.colNo];
+        const hargaVal = row[pengeluaran.colHarga];
+        const ketVal = row[pengeluaran.colKet];
+        if (noVal === undefined || noVal === '') continue;
+        const noStr = String(noVal).trim().toLowerCase();
+        if (noStr.includes('total')) {
+          pengeluaran.totalRow = { label: noVal, harga: hargaVal };
+          break;
+        }
+        // hanya masukkan baris yang kolom harga-nya terisi
+        if (hargaVal !== undefined && hargaVal !== null && hargaVal !== '') {
+          pengeluaran.rows.push({ no: noVal, harga: hargaVal, keterangan: ketVal || '' });
+        }
+      }
+    }
+
+    // cari header tabel uang bulanan: baris yang punya "bulan" dan "nama"
+    for (let r = 0; r < rows.length; r++) {
+      const row = rows[r].map(c => String(c).trim().toLowerCase());
+      const idxBulan = row.indexOf('bulan');
+      const idxNama = row.indexOf('nama');
+      if (idxBulan > -1 && idxNama > -1) {
+        bulanan.colBulan = idxBulan;
+        bulanan.headerRow = r;
+        break;
+      }
+    }
+
+    if (bulanan.headerRow !== undefined) {
+      const namesRow = rows[bulanan.headerRow + 1] || [];
+      let names = [], nameCols = [];
+      for (let c = bulanan.colBulan + 1; c < namesRow.length; c++) {
+        if (namesRow[c] !== undefined && namesRow[c] !== '') {
+          names.push(namesRow[c]);
+          nameCols.push(c);
+        } else if (names.length > 0) {
+          break;
+        }
+      }
+      bulanan.names = names;
+      bulanan.nameCols = nameCols;
+
+      for (let r = bulanan.headerRow + 2; r < rows.length; r++) {
+        const row = rows[r] || [];
+        const bulanVal = row[bulanan.colBulan];
+        if (bulanVal === undefined || bulanVal === '') continue;
+        const bulanStr = String(bulanVal).trim().toLowerCase();
+
+        if (bulanStr.includes('uang saat ini')) {
+          bulanan.uangSaatIni = findFirstNumberAfter(row, bulanan.colBulan);
+          continue;
+        }
+        if (bulanStr.includes('total uang masuk')) {
+          bulanan.totalMasuk = findFirstNumberAfter(row, bulanan.colBulan);
+          continue;
+        }
+        if (bulanStr === 'total') {
+          bulanan.totalRow = { bulan: bulanVal, values: nameCols.map(c => row[c]) };
+          continue;
+        }
+        bulanan.monthlyRows.push({ bulan: bulanVal, values: nameCols.map(c => row[c]) });
+      }
+    }
+
+    return { bulanan, pengeluaran };
+  }
+
+  function renderSummary(data) {
+    const grid = document.getElementById('summaryGrid');
+    grid.innerHTML = '';
+
+    const cards = [
+      { label: 'Total Uang Masuk', value: data.bulanan.totalMasuk, cls: 'green' },
+      { label: 'Uang Saat Ini', value: data.bulanan.uangSaatIni, cls: '' },
+      { label: 'Total Pengeluaran', value: data.pengeluaran.totalRow ? data.pengeluaran.totalRow.harga : null, cls: 'red' }
+    ];
+
+    cards.forEach(c => {
+      if (c.value === null || c.value === undefined) return;
+      const div = document.createElement('div');
+      div.className = 'summary-card ' + c.cls;
+      div.innerHTML = '<div class="label">' + c.label + '</div><div class="value">' + formatRupiah(c.value) + '</div>';
+      grid.appendChild(div);
+    });
+  }
+
+  function renderBulanan(data) {
+    const el = document.getElementById('bulananTable');
+    const b = data.bulanan;
+
+    if (!b.names.length) {
+      el.innerHTML = '<div class="empty-note">Data uang bulanan tidak ditemukan.</div>';
+      return;
+    }
+
+    let html = '<table><thead><tr><th>Bulan</th>';
+    b.names.forEach(n => html += '<th class="number">' + n + '</th>');
+    html += '</tr></thead><tbody>';
+
+    b.monthlyRows.forEach(row => {
+      html += '<tr><td>' + row.bulan + '</td>';
+      row.values.forEach(v => html += '<td class="number">' + formatRupiah(v) + '</td>');
+      html += '</tr>';
+    });
+
+    if (b.totalRow) {
+      html += '<tr class="total-row"><td>' + b.totalRow.bulan + '</td>';
+      b.totalRow.values.forEach(v => html += '<td class="number">' + formatRupiah(v) + '</td>');
+      html += '</tr>';
+    }
+
+    html += '</tbody></table>';
+    el.innerHTML = html;
+  }
+
+  let lastPengeluaranData = null;
+
+  function renderPengeluaran(data, filterText) {
+    const el = document.getElementById('pengeluaranTable');
+    const p = data.pengeluaran;
+    lastPengeluaranData = data;
+
+    if (!p.rows.length && !p.totalRow) {
+      el.innerHTML = '<div class="empty-note">Belum ada data pengeluaran.</div>';
+      return;
+    }
+
+    const filter = (filterText || '').trim().toLowerCase();
+    const filteredRows = filter
+      ? p.rows.filter(row => String(row.keterangan).toLowerCase().includes(filter))
+      : p.rows;
+
+    let html = '<table><thead><tr><th>No</th><th>Harga</th><th>Keterangan</th></tr></thead><tbody>';
+
+    if (!filteredRows.length) {
+      html += '<tr><td colspan="3" class="empty-note">Tidak ada hasil untuk pencarian ini.</td></tr>';
+    } else {
+      filteredRows.forEach(row => {
+        html += '<tr><td>' + row.no + '</td><td class="number">' + formatRupiah(row.harga) + '</td><td>' + row.keterangan + '</td></tr>';
+      });
+    }
+
+    if (p.totalRow) {
+      html += '<tr class="total-row"><td colspan="1">' + p.totalRow.label + '</td><td class="number">' + formatRupiah(p.totalRow.harga) + '</td><td></td></tr>';
+    }
+
+    html += '</tbody></table>';
+    el.innerHTML = html;
+  }
+
+  async function muatExcel() {
+    const statusEl = document.getElementById('status');
+    try {
+      const url = NAMA_FILE_EXCEL + '?t=' + Date.now();
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('File tidak ditemukan (' + response.status + ')');
+
+      const arrayBuffer = await response.arrayBuffer();
+      const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+
+      // paksa mulai dari kolom A supaya index kolom konsisten
+      const range = XLSX.utils.decode_range(sheet['!ref']);
+      range.s.c = 0;
+      const forcedRef = XLSX.utils.encode_range(range);
+
+      const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', range: forcedRef });
+
+      const data = parseSheet(rows);
+      const currentFilter = document.getElementById('searchPengeluaran').value;
+      renderSummary(data);
+      renderBulanan(data);
+      renderPengeluaran(data, currentFilter);
+
+      statusEl.textContent = 'Terakhir diperbarui: ' + new Date().toLocaleTimeString('id-ID');
+    } catch (err) {
+      statusEl.textContent = 'Gagal memuat data: ' + err.message;
+      console.error(err);
+    }
+  }
+
+  document.getElementById('searchPengeluaran').addEventListener('input', (e) => {
+    if (lastPengeluaranData) {
+      renderPengeluaran(lastPengeluaranData, e.target.value);
+    }
+  });
+
+  muatExcel();
+  setInterval(muatExcel, INTERVAL_REFRESH_MS);
+</script>
+
+</body>
+</html>
