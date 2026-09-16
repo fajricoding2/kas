@@ -19,10 +19,7 @@
       padding: 24px;
       min-height: 100vh;
       color: #1f2233;
-      background-image:
-        linear-gradient(180deg, rgba(30, 27, 75, 0.35), rgba(15, 15, 30, 0.55)),
-        url("gambar.png");
-      /* <-- ganti "background.jpg" dengan nama file gambarmu, taruh di folder yang sama */
+      background-image: url("gambar.png");
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -37,7 +34,7 @@
     }
 
     .page-header {
-      background: rgba(79, 70, 229, 0.55);
+      background: rgba(79, 70, 229, 0.25);
       backdrop-filter: blur(14px) saturate(140%);
       -webkit-backdrop-filter: blur(14px) saturate(140%);
       border: 1px solid rgba(255, 255, 255, 0.25);
@@ -75,7 +72,7 @@
     }
 
     .summary-card {
-      background: rgba(255, 255, 255, 0.55);
+      background: rgba(255, 255, 255, 0.25);
       backdrop-filter: blur(16px) saturate(160%);
       -webkit-backdrop-filter: blur(16px) saturate(160%);
       border: 1px solid rgba(255, 255, 255, 0.5);
@@ -115,9 +112,9 @@
     }
 
     .card {
-      background: rgba(255, 255, 255, 0.45);
-      backdrop-filter: blur(18px) saturate(160%);
-      -webkit-backdrop-filter: blur(18px) saturate(160%);
+      background: rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(18px) saturate(110%);
+      -webkit-backdrop-filter: blur(18px) saturate(110%);
       border: 1px solid rgba(255, 255, 255, 0.5);
       border-radius: 18px;
       padding: 22px 24px;
@@ -183,7 +180,7 @@
       border-collapse: collapse;
       width: 100%;
       font-size: 14px;
-      background: rgba(255, 255, 255, 0.35);
+      background: rgba(255, 255, 255, 0.15);
       border-radius: 12px;
       overflow: hidden;
     }
@@ -196,7 +193,7 @@
     }
 
     th {
-      background: rgba(255, 255, 255, 0.55);
+      background: rgba(255, 255, 255, 0.15);
       color: #3f3f52;
       font-weight: 600;
       font-size: 12px;
@@ -295,23 +292,6 @@
       return 'Rp ' + num.toLocaleString('id-ID');
     }
 
-    function formatTanggal(nilai) {
-      if (nilai === null || nilai === undefined || nilai === '') return '-';
-      // kalau sudah berupa objek Date (hasil cellDates: true)
-      if (nilai instanceof Date && !isNaN(nilai)) {
-        return nilai.toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric'});
-      }
-      // kalau masih berupa serial number Excel
-      if (typeof nilai === 'number') {
-        const tgl = new Date(Math.round((nilai - 25569) * 86400 * 1000));
-        if (!isNaN(tgl)) {
-          return tgl.toLocaleDateString('id-ID', {day: '2-digit', month: 'short', year: 'numeric'});
-        }
-      }
-      // selain itu tampilkan apa adanya (misal diketik manual sebagai teks)
-      return String(nilai);
-    }
-
     function findFirstNumberAfter(row, fromCol) {
       for (let c = fromCol + 1; c < row.length; c++) {
         const v = row[c];
@@ -324,21 +304,20 @@
 
     function parseSheet(rows) {
       const bulanan = {colBulan: -1, names: [], nameCols: [], monthlyRows: [], totalRow: null, totalMasuk: null, uangSaatIni: null};
-      const pengeluaran = {colNo: -1, colTanggal: -1, colHarga: -1, colKet: -1, rows: [], totalRow: null};
+      const pengeluaran = {colNo: -1, colHarga: -1, colKet: -1, colTgl: -1, rows: [], totalRow: null};
 
       // cari header tabel pengeluaran: baris yang punya "no", "harga", "keterangan"
-      // kolom "tanggal" bersifat opsional — kalau ada akan otomatis ikut ditampilkan
       for (let r = 0; r < rows.length; r++) {
         const row = rows[r].map(c => String(c).trim().toLowerCase());
         const idxNo = row.indexOf('no');
         const idxHarga = row.indexOf('harga');
         const idxKet = row.indexOf('keterangan');
-        const idxTanggal = row.indexOf('tanggal');
-        if (idxNo > -1 && idxHarga > -1 && idxKet > -1) {
+        const idxtgl = row.indexOf('tanggal');
+        if (idxNo > -1 && idxHarga > -1 && idxKet > -1 && idxtgl > -1) {
           pengeluaran.colNo = idxNo;
           pengeluaran.colHarga = idxHarga;
           pengeluaran.colKet = idxKet;
-          pengeluaran.colTanggal = idxTanggal;
+          pengeluaran.colTgl = idxtgl;
           pengeluaran.headerRow = r;
           break;
         }
@@ -350,16 +329,16 @@
           const noVal = row[pengeluaran.colNo];
           const hargaVal = row[pengeluaran.colHarga];
           const ketVal = row[pengeluaran.colKet];
-          const tglVal = pengeluaran.colTanggal > -1 ? row[pengeluaran.colTanggal] : '';
+          const TglVal= row[pengeluaran.colTgl];
           if (noVal === undefined || noVal === '') continue;
           const noStr = String(noVal).trim().toLowerCase();
           if (noStr.includes('total')) {
-            pengeluaran.totalRow = {label: noVal, harga: hargaVal};
+            pengeluaran.totalRow = {label: noVal, harga: hargaVal, tanggal: TglVal };
             break;
           }
           // hanya masukkan baris yang kolom harga-nya terisi
           if (hargaVal !== undefined && hargaVal !== null && hargaVal !== '') {
-            pengeluaran.rows.push({no: noVal, tanggal: tglVal, harga: hargaVal, keterangan: ketVal || ''});
+            pengeluaran.rows.push({no: noVal, harga: hargaVal, keterangan: ketVal,tanggal: TglVal || ''});
           }
         }
       }
@@ -480,26 +459,18 @@
         ? p.rows.filter(row => String(row.keterangan).toLowerCase().includes(filter))
         : p.rows;
 
-      const adaTanggal = p.colTanggal > -1;
-      const jumlahKolom = adaTanggal ? 4 : 3;
-
-      let html = '<table><thead><tr><th>No</th>';
-      if (adaTanggal) html += '<th>Tanggal</th>';
-      html += '<th>Harga</th><th>Keterangan</th></tr></thead><tbody>';
+      let html = '<table><thead><tr><th>No</th><th>Harga</th><th>Keterangan</th></tr></thead><tbody>';
 
       if (!filteredRows.length) {
-        html += '<tr><td colspan="' + jumlahKolom + '" class="empty-note">Tidak ada hasil untuk pencarian ini.</td></tr>';
+        html += '<tr><td colspan="3" class="empty-note">Tidak ada hasil untuk pencarian ini.</td></tr>';
       } else {
         filteredRows.forEach(row => {
-          html += '<tr><td>' + row.no + '</td>';
-          if (adaTanggal) html += '<td>' + formatTanggal(row.tanggal) + '</td>';
-          html += '<td class="number">' + formatRupiah(row.harga) + '</td><td>' + row.keterangan + '</td></tr>';
+          html += '<tr><td>' + row.no + '</td><td class="number">' + formatRupiah(row.harga) + '</td><td>' + row.keterangan + '</td></tr>';
         });
       }
 
       if (p.totalRow) {
-        html += '<tr class="total-row"><td colspan="' + (adaTanggal ? 2 : 1) + '">' + p.totalRow.label + '</td>';
-        html += '<td class="number">' + formatRupiah(p.totalRow.harga) + '</td><td></td></tr>';
+        html += '<tr class="total-row"><td colspan="1">' + p.totalRow.label + '</td><td class="number">' + formatRupiah(p.totalRow.harga) + '</td><td></td></tr>';
       }
 
       html += '</tbody></table>';
@@ -514,7 +485,7 @@
         if (!response.ok) throw new Error('File tidak ditemukan (' + response.status + ')');
 
         const arrayBuffer = await response.arrayBuffer();
-        const workbook = XLSX.read(arrayBuffer, {type: 'array', cellDates: true});
+        const workbook = XLSX.read(arrayBuffer, {type: 'array'});
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
 
         // paksa mulai dari kolom A supaya index kolom konsisten
