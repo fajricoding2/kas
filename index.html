@@ -317,6 +317,7 @@
           pengeluaran.colNo = idxNo;
           pengeluaran.colHarga = idxHarga;
           pengeluaran.colKet = idxKet;
+          pengeluaran.colTgl = idxtgl;
           pengeluaran.headerRow = r;
           break;
         }
@@ -328,15 +329,16 @@
           const noVal = row[pengeluaran.colNo];
           const hargaVal = row[pengeluaran.colHarga];
           const ketVal = row[pengeluaran.colKet];
+          const TglVal= row[pengeluaran.colTgl];
           if (noVal === undefined || noVal === '') continue;
           const noStr = String(noVal).trim().toLowerCase();
           if (noStr.includes('total')) {
-            pengeluaran.totalRow = {label: noVal, harga: hargaVal};
+            pengeluaran.totalRow = {label: noVal, harga: hargaVal, tanggal: TglVal };
             break;
           }
           // hanya masukkan baris yang kolom harga-nya terisi
           if (hargaVal !== undefined && hargaVal !== null && hargaVal !== '') {
-            pengeluaran.rows.push({no: noVal, harga: hargaVal, keterangan: ketVal || ''});
+            pengeluaran.rows.push({no: noVal, harga: hargaVal, keterangan: ketVal,tanggal: TglVal || ''});
           }
         }
       }
